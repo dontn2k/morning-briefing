@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  View, Text, TouchableOpacity, ScrollView,
+  View, Text, TouchableOpacity, ScrollView, TextInput,
   StyleSheet, Platform,
 } from "react-native";
 import DraggableFlatList, { ScaleDecorator } from "react-native-draggable-flatlist";
@@ -39,9 +39,41 @@ function ThemePicker({ t, themeKey, setThemeKey }) {
 }
 
 function CityPicker({ label, selected, onSelect, t }) {
+  const [input, setInput] = useState("");
+
+  const handleSubmit = () => {
+    const trimmed = input.trim();
+    if (trimmed.length > 1) {
+      onSelect(trimmed);
+      setInput("");
+    }
+  };
+
   return (
     <>
       <Text style={[styles.subLabel, { color: t.muted }]}>{label}</Text>
+      <View style={styles.inputRow}>
+        <TextInput
+          value={input}
+          onChangeText={setInput}
+          onSubmitEditing={handleSubmit}
+          placeholder="Stadt oder PLZ eingeben…"
+          placeholderTextColor={t.fainter}
+          returnKeyType="done"
+          style={[styles.textInput, { color: t.headline, borderColor: t.cardBorder, backgroundColor: t.bg }]}
+        />
+        <TouchableOpacity
+          onPress={handleSubmit}
+          style={[styles.inputBtn, { backgroundColor: t.accentLight }]}
+        >
+          <Text style={[styles.inputBtnText, { color: t.accent }]}>OK</Text>
+        </TouchableOpacity>
+      </View>
+      {selected ? (
+        <View style={[styles.selectedCity, { backgroundColor: t.accentLight, borderColor: t.accent }]}>
+          <Text style={[styles.selectedCityText, { color: t.accent }]}>📍 {selected}</Text>
+        </View>
+      ) : null}
       <View style={styles.cityWrap}>
         {CITIES.map((city) => (
           <TouchableOpacity
@@ -149,4 +181,22 @@ const styles = StyleSheet.create({
   handleBar: { width: 18, height: 2, borderRadius: 1 },
   dragLabel: { fontSize: 14, fontFamily: "Nunito_400Regular" },
   hint: { fontSize: 12, marginBottom: 14, fontFamily: "Nunito_400Regular" },
+  inputRow: { flexDirection: "row", gap: 8, marginBottom: 10 },
+  textInput: {
+    flex: 1, borderWidth: 1, borderRadius: 12,
+    paddingHorizontal: 14, paddingVertical: 9,
+    fontSize: 13, fontFamily: "Nunito_400Regular",
+  },
+  inputBtn: {
+    paddingHorizontal: 16, paddingVertical: 9,
+    borderRadius: 12, justifyContent: "center",
+  },
+  inputBtnText: { fontSize: 13, fontWeight: "600", fontFamily: "Nunito_600SemiBold" },
+  selectedCity: {
+    flexDirection: "row", alignItems: "center",
+    paddingHorizontal: 14, paddingVertical: 8,
+    borderRadius: 20, borderWidth: 1.5,
+    marginBottom: 10, alignSelf: "flex-start",
+  },
+  selectedCityText: { fontSize: 13, fontFamily: "Nunito_600SemiBold" },
 });
