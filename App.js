@@ -20,10 +20,12 @@ import * as SplashScreen from "expo-splash-screen";
 
 import { THEMES } from "./src/themes";
 import { scheduleDailyBriefing, requestPermissions } from "./src/services/notifications";
+import * as Notifications from "expo-notifications";
 import { getTodayGreeting } from "./src/data/greetings";
 import { DEFAULT_ORDER } from "./src/data/static";
 
 import { QuoteBlock }     from "./src/components/QuoteBlock";
+import { ShineOverlay }   from "./src/components/ShineOverlay";
 import { QuestionBlock }  from "./src/components/QuestionBlock";
 import { WeatherBlock }   from "./src/components/WeatherBlock";
 import { CalendarBlock }  from "./src/components/CalendarBlock";
@@ -89,6 +91,14 @@ export default function App() {
     requestPermissions();
   }, []);
 
+  // ── Notification tap → immer Briefing zeigen ─────────────────────────────
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener(() => {
+      setScreen("briefing");
+    });
+    return () => sub.remove();
+  }, []);
+
   const [fontsLoaded] = useFonts({
     Nunito_400Regular,
     Nunito_600SemiBold,
@@ -122,6 +132,7 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaView style={[styles.safe, { backgroundColor: t.bg }]} onLayout={onLayoutRootView}>
         <StatusBar barStyle="dark-content" backgroundColor={t.bg} />
+        {screen === "briefing" && <ShineOverlay key={screen} />}
 
         {/* ── Header ── */}
         <View style={[styles.header, { backgroundColor: t.bg }]}>
