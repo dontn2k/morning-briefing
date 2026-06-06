@@ -19,6 +19,7 @@ import {
 import * as SplashScreen from "expo-splash-screen";
 
 import { THEMES } from "./src/themes";
+import { scheduleDailyBriefing, requestPermissions } from "./src/services/notifications";
 import { getTodayGreeting } from "./src/data/greetings";
 import { DEFAULT_ORDER } from "./src/data/static";
 
@@ -76,6 +77,17 @@ export default function App() {
       themeKey, city1, city2, newsCategories, order, hour, minute,
     }));
   }, [themeKey, city1, city2, newsCategories, order, hour, minute, loaded]);
+
+  // ── Schedule daily notification when hour/minute changes ─────────────────
+  useEffect(() => {
+    if (!loaded) return;
+    scheduleDailyBriefing(hour, minute);
+  }, [hour, minute, loaded]);
+
+  // ── Request permissions on first launch ──────────────────────────────────
+  useEffect(() => {
+    requestPermissions();
+  }, []);
 
   const [fontsLoaded] = useFonts({
     Nunito_400Regular,

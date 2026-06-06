@@ -6,10 +6,10 @@ export const NEWS_SOURCES = [
   { id: "faz",          name: "FAZ",           url: "https://www.faz.net/rss/aktuell/" },
   { id: "sueddeutsche", name: "Süddeutsche",   url: "https://rss.sueddeutsche.de/alles" },
   { id: "welt",         name: "Welt",          url: "https://www.welt.de/feeds/latest.rss" },
-  { id: "heise",        name: "Heise",         url: "https://www.heise.de/rss/heise-top-atom.xml" },
-  { id: "tagesschau",   name: "Tagesschau",    url: "https://www.tagesschau.de/xml/rss2/" },
+  { id: "heise",        name: "Heise",         url: "https://www.heise.de/rss/heise-atom.xml" },
+  { id: "tagesschau",   name: "Tagesschau",    url: "https://www.tagesschau.de/infoservices/alle-meldungen-100~rss2.xml" },
   { id: "nzz",          name: "NZZ",           url: "https://www.nzz.ch/recent.rss" },
-  { id: "standard",     name: "Der Standard",  url: "https://www.derstandard.at/rss" },
+  { id: "stern",        name: "Stern",         url: "https://www.stern.de/feed/standard/alle-artikel/" },
   { id: "handelsblatt", name: "Handelsblatt",  url: "https://www.handelsblatt.com/contentexport/feed/schlagzeilen" },
 ];
 
@@ -71,12 +71,16 @@ export const NEWS_CATEGORIES = {
   ],
 };
 
-// Mehrere Proxies – fallback wenn einer blockiert
-const PROXIES = [
-  (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-  (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-  (url) => `https://thingproxy.freeboard.io/fetch/${url}`,
-];
+// Direkt abrufen (nativ) oder via Proxy (Web-Fallback)
+import { Platform } from "react-native";
+
+const PROXIES = Platform.OS === "web"
+  ? [
+      (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    ]
+  : [
+      (url) => url, // nativ: direkt, kein Proxy nötig
+    ];
 
 function parseRSS(xmlString) {
   const items = [];
@@ -119,12 +123,28 @@ function parseRSS(xmlString) {
   return items;
 }
 
+const MOBILE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
+
+async function fetchWithTimeout(url, options, ms = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function tryProxy(proxyFn, sourceUrl) {
   const proxied = proxyFn(sourceUrl);
-  const res = await fetch(proxied, { signal: AbortSignal.timeout(7000) });
+  const headers = {
+    "User-Agent": MOBILE_UA,
+    "Accept": "application/rss+xml, application/xml, text/xml, */*",
+  };
+  const res = await fetchWithTimeout(proxied, { headers });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-  // allorigins wraps in JSON
   if (proxied.includes("allorigins")) {
     const json = await res.json();
     return json.contents || "";
