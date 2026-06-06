@@ -6,7 +6,8 @@ import {
 import DraggableFlatList, { ScaleDecorator } from "react-native-draggable-flatlist";
 import { Card, SectionLabel } from "./Card";
 import { THEMES } from "../themes";
-import { CITIES, NEWS_FEEDS, BLOCK_LABELS } from "../data/static";
+import { CITIES, BLOCK_LABELS } from "../data/static";
+import { NEWS_CATEGORIES } from "../services/news";
 
 
 const ITEM_HEIGHT = 44;
@@ -241,7 +242,7 @@ function ReorderList({ order, setOrder, t }) {
   );
 }
 
-export function SettingsScreen({ t, city1, setCity1, city2, setCity2, newsFeed, setNewsFeed, themeKey, setThemeKey, order, setOrder, hour, setHour, minute, setMinute }) {
+export function SettingsScreen({ t, city1, setCity1, city2, setCity2, newsCategories, setNewsCategories, themeKey, setThemeKey, order, setOrder, hour, setHour, minute, setMinute }) {
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       <TimePicker t={t} hour={hour} setHour={setHour} minute={minute} setMinute={setMinute} />
@@ -255,20 +256,35 @@ export function SettingsScreen({ t, city1, setCity1, city2, setCity2, newsFeed, 
       </Card>
 
       <Card t={t}>
-        <SectionLabel t={t}>News · Thema</SectionLabel>
-        {NEWS_FEEDS.map((feed) => (
-          <TouchableOpacity
-            key={feed}
-            onPress={() => setNewsFeed(feed)}
-            style={[
-              styles.feedRow,
-              { borderColor: newsFeed === feed ? t.accentBorder : t.cardBorder, backgroundColor: newsFeed === feed ? t.accentLight : t.bg, borderWidth: newsFeed === feed ? 1.5 : 1 },
-            ]}
-          >
-            <Text style={[styles.feedText, { color: newsFeed === feed ? t.accent : t.muted }]}>{feed}</Text>
-            {newsFeed === feed && <View style={[styles.dot, { backgroundColor: t.accent }]} />}
-          </TouchableOpacity>
-        ))}
+        <SectionLabel t={t}>News · Themen</SectionLabel>
+        <Text style={[styles.newsHint, { color: t.muted }]}>Mehrere wählbar · max. 10 Artikel gesamt</Text>
+        <View style={styles.categoryWrap}>
+          {Object.keys(NEWS_CATEGORIES).map((cat) => {
+            const active = newsCategories.includes(cat);
+            return (
+              <TouchableOpacity
+                key={cat}
+                onPress={() => {
+                  if (active) {
+                    setNewsCategories(newsCategories.filter((c) => c !== cat));
+                  } else {
+                    setNewsCategories([...newsCategories, cat]);
+                  }
+                }}
+                style={[
+                  styles.categoryChip,
+                  {
+                    borderColor: active ? t.accentBorder : t.cardBorder,
+                    backgroundColor: active ? t.accentLight : t.bg,
+                    borderWidth: active ? 1.5 : 1,
+                  },
+                ]}
+              >
+                <Text style={[styles.categoryText, { color: active ? t.accent : t.muted }]}>{cat}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </Card>
 
       <ReorderList order={order} setOrder={setOrder} t={t} />
@@ -295,6 +311,10 @@ const styles = StyleSheet.create({
   handleBar: { width: 18, height: 2, borderRadius: 1 },
   dragLabel: { fontSize: 14, fontFamily: "Nunito_400Regular" },
   hint: { fontSize: 12, marginBottom: 14, fontFamily: "Nunito_400Regular" },
+  newsHint: { fontSize: 12, marginBottom: 12, fontFamily: "Nunito_400Regular" },
+  categoryWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  categoryChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 },
+  categoryText: { fontSize: 13, fontFamily: "Nunito_400Regular" },
   inputRow: { flexDirection: "row", gap: 8, marginBottom: 10 },
   textInput: {
     flex: 1, borderWidth: 1, borderRadius: 12,

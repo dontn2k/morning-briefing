@@ -44,7 +44,7 @@ export default function App() {
   const [themeKey, setThemeKey] = useState("warm");
   const [city1, setCity1]       = useState("Frankfurt");
   const [city2, setCity2]       = useState("Berlin");
-  const [newsFeed, setNewsFeed] = useState("Rechenzentrum");
+  const [newsCategories, setNewsCategories] = useState(["Politik", "Wirtschaft"]);
   const [order, setOrder]       = useState(DEFAULT_ORDER);
   const [hour, setHour]         = useState(6);
   const [minute, setMinute]     = useState(0);
@@ -59,7 +59,7 @@ export default function App() {
           if (s.themeKey) setThemeKey(s.themeKey);
           if (s.city1)    setCity1(s.city1);
           if (s.city2)    setCity2(s.city2);
-          if (s.newsFeed) setNewsFeed(s.newsFeed);
+          if (s.newsCategories) setNewsCategories(s.newsCategories);
           if (s.order)    setOrder(s.order);
           if (s.hour   !== undefined) setHour(s.hour);
           if (s.minute !== undefined) setMinute(s.minute);
@@ -73,9 +73,9 @@ export default function App() {
   useEffect(() => {
     if (!loaded) return;
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
-      themeKey, city1, city2, newsFeed, order, hour, minute,
+      themeKey, city1, city2, newsCategories, order, hour, minute,
     }));
-  }, [themeKey, city1, city2, newsFeed, order, hour, minute, loaded]);
+  }, [themeKey, city1, city2, newsCategories, order, hour, minute, loaded]);
 
   const [fontsLoaded] = useFonts({
     Nunito_400Regular,
@@ -100,7 +100,7 @@ export default function App() {
       case "question": return <QuestionBlock key={id} t={t} />;
       case "weather":  return <WeatherBlock  key={id} t={t} city1={city1} city2={city2} />;
       case "calendar": return <CalendarBlock key={id} t={t} />;
-      case "news":     return <NewsBlock     key={id} t={t} />;
+      case "news":     return <NewsBlock     key={id} t={t} selectedCategories={newsCategories} />;
       case "wiki":     return <WikiBlock     key={id} t={t} />;
       default: return null;
     }
@@ -144,7 +144,7 @@ export default function App() {
             t={t}
             city1={city1}       setCity1={setCity1}
             city2={city2}       setCity2={setCity2}
-            newsFeed={newsFeed} setNewsFeed={setNewsFeed}
+            newsCategories={newsCategories} setNewsCategories={setNewsCategories}
             themeKey={themeKey} setThemeKey={setThemeKey}
             order={order}       setOrder={setOrder}
             hour={hour}         setHour={setHour}
