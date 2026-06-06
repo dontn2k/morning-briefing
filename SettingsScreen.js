@@ -16,54 +16,53 @@ const DRUM_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
 function DrumRoller({ values, selected, onSelect, t }) {
   const ref = useRef(null);
   const selectedIndex = values.indexOf(selected);
-  const isScrolling = useRef(false);
 
-  const scrollToIndex = useCallback((index) => {
-    ref.current?.scrollTo({ y: index * ITEM_HEIGHT, animated: true });
-  }, []);
-
-  const onScroll = useCallback((e) => {
-    if (!isScrolling.current) return;
+  const onMomentumScrollEnd = useCallback((e) => {
     const index = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
     const clamped = Math.max(0, Math.min(index, values.length - 1));
     onSelect(values[clamped]);
   }, [values, onSelect]);
 
-  const onMomentumScrollEnd = useCallback((e) => {
-    isScrolling.current = false;
+  const onScrollEnd = useCallback((e) => {
     const index = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
     const clamped = Math.max(0, Math.min(index, values.length - 1));
     onSelect(values[clamped]);
-    scrollToIndex(clamped);
-  }, [values, onSelect, scrollToIndex]);
-
-  const onScrollBegin = useCallback(() => {
-    isScrolling.current = true;
-  }, []);
-
-  // Web: use +/- buttons since ScrollView snap is unreliable in browsers
-  const decrement = () => {
-    const newIndex = Math.max(0, selectedIndex - 1);
-    onSelect(values[newIndex]);
-  };
-  const increment = () => {
-    const newIndex = Math.min(values.length - 1, selectedIndex + 1);
-    onSelect(values[newIndex]);
-  };
+  }, [values, onSelect]);
 
   return (
-    <View style={drumStyles.rollerOuter}>
-      <TouchableOpacity onPress={decrement} style={[drumStyles.arrowBtn, { borderColor: t.divider }]}>
-        <Text style={[drumStyles.arrowText, { color: t.muted }]}>▲</Text>
-      </TouchableOpacity>
-      <View style={[drumStyles.valueBox, { backgroundColor: t.accentMuted, borderColor: t.accentBorder }]}>
-        <Text style={[drumStyles.valueText, { color: t.accent }]}>
-          {String(selected).padStart(2, "0")}
-        </Text>
-      </View>
-      <TouchableOpacity onPress={increment} style={[drumStyles.arrowBtn, { borderColor: t.divider }]}>
-        <Text style={[drumStyles.arrowText, { color: t.muted }]}>▼</Text>
-      </TouchableOpacity>
+    <View style={[drumStyles.rollerWrap, { borderColor: t.divider }]}>
+      {/* selection highlight */}
+      <View style={[drumStyles.selectionBar, { backgroundColor: t.accentMuted, borderColor: t.accentBorder }]} pointerEvents="none" />
+      <ScrollView
+        ref={ref}
+        showsVerticalScrollIndicator={false}
+        snapToInterval={ITEM_HEIGHT}
+        decelerationRate="fast"
+        contentOffset={{ y: selectedIndex * ITEM_HEIGHT }}
+        onMomentumScrollEnd={onMomentumScrollEnd}
+        onScrollEndDrag={onScrollEnd}
+        contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
+        style={{ height: DRUM_HEIGHT }}
+      >
+        {values.map((val, i) => (
+          <TouchableOpacity
+            key={val}
+            onPress={() => {
+              ref.current?.scrollTo({ y: i * ITEM_HEIGHT, animated: true });
+              onSelect(val);
+            }}
+            style={drumStyles.item}
+          >
+            <Text style={[
+              drumStyles.itemText,
+              { color: selected === val ? t.accent : t.faint },
+              selected === val && drumStyles.itemTextSelected,
+            ]}>
+              {String(val).padStart(2, "0")}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
     </View>
   );
 }
@@ -90,30 +89,34 @@ function TimePicker({ t, hour, setHour, minute, setMinute }) {
 
 const drumStyles = StyleSheet.create({
   tagline: {
-    fontSize: 12, fontFamily: "Lora_400Regular_Italic",
-    textAlign: "center", marginBottom: 8, letterSpacing: 0.5,
+    fontSize: 11, fontFamily: "Lora_400Regular_Italic",
+    textAlign: "center", marginBottom: 6, letterSpacing: 0.5,
   },
   pickerRow: {
     flexDirection: "row", alignItems: "center",
-    justifyContent: "center", gap: 16, marginBottom: 14,
+    justifyContent: "center", gap: 8, marginBottom: 14,
   },
-  rollerOuter: {
-    alignItems: "center", gap: 4,
+  rollerWrap: {
+    width: 72, borderRadius: 16, overflow: "hidden",
+    borderWidth: 1, position: "relative",
   },
-  arrowBtn: {
-    width: 56, height: 32, borderRadius: 10, borderWidth: 1,
-    justifyContent: "center", alignItems: "center",
+  selectionBar: {
+    position: "absolute", top: ITEM_HEIGHT * 2,
+    left: 0, right: 0, height: ITEM_HEIGHT,
+    borderTopWidth: 1, borderBottomWidth: 1,
+    zIndex: 1, pointerEvents: "none",
   },
-  arrowText: { fontSize: 12 },
-  valueBox: {
-    width: 72, height: 56, borderRadius: 14, borderWidth: 1.5,
-    justifyContent: "center", alignItems: "center",
+  item: {
+    height: ITEM_HEIGHT, justifyContent: "center", alignItems: "center",
   },
-  valueText: {
-    fontSize: 30, fontFamily: "Lora_600SemiBold", letterSpacing: 1,
+  itemText: {
+    fontSize: 22, fontFamily: "Lora_400Regular", letterSpacing: 1,
+  },
+  itemTextSelected: {
+    fontSize: 26, fontFamily: "Lora_600SemiBold",
   },
   colon: {
-    fontSize: 30, fontFamily: "Lora_600SemiBold", marginBottom: 4,
+    fontSize: 28, fontFamily: "Lora_600SemiBold", marginBottom: 4,
   },
   preview: {
     textAlign: "center", fontSize: 12,

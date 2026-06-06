@@ -1,10 +1,9 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, SafeAreaView, StatusBar, Platform,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   useFonts,
   Nunito_400Regular,
@@ -22,12 +21,12 @@ import { THEMES } from "./src/themes";
 import { getTodayGreeting } from "./src/data/greetings";
 import { DEFAULT_ORDER } from "./src/data/static";
 
-import { QuoteBlock }     from "./src/components/QuoteBlock";
-import { QuestionBlock }  from "./src/components/QuestionBlock";
-import { WeatherBlock }   from "./src/components/WeatherBlock";
-import { CalendarBlock }  from "./src/components/CalendarBlock";
-import { NewsBlock }      from "./src/components/NewsBlock";
-import { WikiBlock }      from "./src/components/WikiBlock";
+import { QuoteBlock }    from "./src/components/QuoteBlock";
+import { QuestionBlock } from "./src/components/QuestionBlock";
+import { WeatherBlock }  from "./src/components/WeatherBlock";
+import { CalendarBlock } from "./src/components/CalendarBlock";
+import { NewsBlock }     from "./src/components/NewsBlock";
+import { WikiBlock }     from "./src/components/WikiBlock";
 import { SettingsScreen } from "./src/components/SettingsScreen";
 
 SplashScreen.preventAutoHideAsync();
@@ -36,8 +35,6 @@ const todayStr = new Date().toLocaleDateString("de-DE", {
   weekday: "long", day: "numeric", month: "long",
 });
 const todayGreeting = getTodayGreeting();
-
-const STORAGE_KEY = "@morning_briefing_settings";
 
 export default function App() {
   const [screen, setScreen]     = useState("briefing");
@@ -48,34 +45,6 @@ export default function App() {
   const [order, setOrder]       = useState(DEFAULT_ORDER);
   const [hour, setHour]         = useState(6);
   const [minute, setMinute]     = useState(0);
-  const [loaded, setLoaded]     = useState(false);
-
-  // ── Load settings on start ──────────────────────────────────────────────────
-  useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
-      if (raw) {
-        try {
-          const s = JSON.parse(raw);
-          if (s.themeKey) setThemeKey(s.themeKey);
-          if (s.city1)    setCity1(s.city1);
-          if (s.city2)    setCity2(s.city2);
-          if (s.newsFeed) setNewsFeed(s.newsFeed);
-          if (s.order)    setOrder(s.order);
-          if (s.hour   !== undefined) setHour(s.hour);
-          if (s.minute !== undefined) setMinute(s.minute);
-        } catch {}
-      }
-      setLoaded(true);
-    });
-  }, []);
-
-  // ── Save settings on every change ──────────────────────────────────────────
-  useEffect(() => {
-    if (!loaded) return;
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
-      themeKey, city1, city2, newsFeed, order, hour, minute,
-    }));
-  }, [themeKey, city1, city2, newsFeed, order, hour, minute, loaded]);
 
   const [fontsLoaded] = useFonts({
     Nunito_400Regular,
@@ -87,10 +56,10 @@ export default function App() {
   });
 
   const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded && loaded) await SplashScreen.hideAsync();
-  }, [fontsLoaded, loaded]);
+    if (fontsLoaded) await SplashScreen.hideAsync();
+  }, [fontsLoaded]);
 
-  if (!fontsLoaded || !loaded) return null;
+  if (!fontsLoaded) return null;
 
   const t = THEMES[themeKey];
 
@@ -136,7 +105,7 @@ export default function App() {
           >
             {order.map(renderBlock)}
             <Text style={[styles.footer, { color: t.fainter }]}>
-              Briefing um {String(hour).padStart(2,"0")}:{String(minute).padStart(2,"0")} Uhr
+              Generiert um 06:00 Uhr
             </Text>
           </ScrollView>
         ) : (
